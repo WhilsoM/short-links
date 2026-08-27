@@ -1,0 +1,19 @@
+.PHONY: run lint test migration-create migration-up migration-down
+
+run:
+	go run ./cmd/api
+
+lint:
+	golangci-lint run
+
+test:
+	go test ./...
+
+migration-create:
+	goose -dir migrations create $(name) sql
+
+migration-up:
+	goose -dir migrations postgres "$(DATABASE_URL)" up
+
+migration-down:
+	goose -dir migrations postgres "$(DATABASE_URL)" down
