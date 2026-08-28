@@ -8,6 +8,7 @@ import (
 	"short-links/internal/clients/postgresql"
 	"short-links/internal/config"
 	custommiddlewares "short-links/internal/custom-middlewares"
+	"short-links/internal/links"
 	"short-links/internal/users"
 	"short-links/internal/utils"
 
@@ -41,9 +42,11 @@ func main() {
 		r.Group(func(r chi.Router) {
 			r.Use(custommiddlewares.AuthMiddleware(jwtmanager))
 
-			// todo: add links init
+			links.Init(r, dbpool)
 		})
 	})
+
+	slog.Info("server started", "port", cfg.Port)
 
 	if err := http.ListenAndServe(cfg.Port, r); err != nil {
 		slog.Info("server shutdowned", "error", err, "port", cfg.Port)
