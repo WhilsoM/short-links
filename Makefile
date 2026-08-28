@@ -1,4 +1,4 @@
-.PHONY: run lint test migration-create migration-up migration-down
+.PHONY: run lint test migration-create migration-up migration-down git-log
 
 run:
 	go run ./cmd/api
@@ -17,3 +17,6 @@ migration-up:
 
 migration-down:
 	goose -dir migrations postgres "$(DATABASE_URL)" down
+
+git-log:
+	git log --oneline --decorate --all --graph
