@@ -7,6 +7,11 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 )
 
+type JWTManagerInterface interface {
+	GenerateTokens(userID int) (string, error)
+	ParseToken(tokenString string) (int, error)
+}
+
 type JWTManager struct {
 	secret string
 }

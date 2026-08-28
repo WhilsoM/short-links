@@ -8,11 +8,6 @@ import (
 	"strings"
 )
 
-type JWTManager interface {
-	GenerateTokens(userID int) (string, error)
-	ParseToken(tokenString string) (int, error)
-}
-
 type UsersRepo interface {
 	CreateUser(ctx context.Context, username, passwordHash string) (dto.User, error)
 	GetUserByUsername(ctx context.Context, username string) (dto.User, error)
@@ -20,10 +15,10 @@ type UsersRepo interface {
 
 type UsersService struct {
 	repo       UsersRepo
-	jwtmanager JWTManager
+	jwtmanager utils.JWTManagerInterface
 }
 
-func NewUsersService(repo UsersRepo, jwtmanager JWTManager) *UsersService {
+func NewUsersService(repo UsersRepo, jwtmanager utils.JWTManagerInterface) *UsersService {
 	return &UsersService{
 		repo,
 		jwtmanager,
