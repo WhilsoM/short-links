@@ -16,5 +16,6 @@ func Init(r chi.Router, db *pgxpool.Pool) {
 
 	r.Route("/links", func(r chi.Router) {
 		r.Post("/", h.CreateLink)
+		r.Get("/", h.GetLinks)
 	})
 }

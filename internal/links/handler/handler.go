@@ -11,6 +11,7 @@ import (
 
 type LinkService interface {
 	CreateLink(ctx context.Context, userID int, link string) (dto.Link, error)
+	GetLinks(ctx context.Context, userID int) ([]dto.Link, error)
 }
 
 type LinkHandler struct {
@@ -52,5 +53,22 @@ func (l *LinkHandler) CreateLink(w http.ResponseWriter, r *http.Request) {
 	}
 
 	utils.WriteJSONResponse(w, http.StatusCreated, res)
+}
 
+func (l *LinkHandler) GetLinks(w http.ResponseWriter, r *http.Request) {
+	userID, err := custommiddlewares.GetUserIDFromContext(r.Context())
+	if err != nil {
+		slog.Info("failed to get user id from context", "error", err)
+		utils.WriteJSONErrorResponse(w, http.StatusBadRequest, "invalid id")
+		return
+	}
+
+	links, err := l.svc.GetLinks(r.Context(), userID)
+	if err != nil {
+		slog.Info("failed to create link", "error", err, "user_id", userID)
+		utils.WriteJSONErrorResponse(w, http.StatusInternalServerError, "failed to create link")
+		return
+	}
+
+	utils.WriteJSONResponse(w, http.StatusCreated, links)
 }
