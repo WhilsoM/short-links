@@ -1,4 +1,41 @@
 services:
+  backend:
+    build: .
+    command: ["./api"]
+
+    environment:
+      PORT: :8080
+      DATABASE_URL: postgres://postgres:postgres@postgresql:5432/short_links
+      JWT_SECRET: super-secret-key
+      REDIS_ADDR: redis:6379
+      KAFKA_ADDR: kafka:19092
+      KAFKA_ANALYTIC_TOPIC: link-visited
+    ports:
+      - "8080:8080"
+    depends_on:
+      postgresql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+
+  analytics:
+    build: .
+    command: ["./analytics"]
+
+    environment:
+      PORT: :8080
+      DATABASE_URL: postgres://postgres:postgres@postgresql:5432/short_links
+      JWT_SECRET: super-secret-key
+      REDIS_ADDR: redis:6379
+      KAFKA_ADDR: kafka:19092
+      KAFKA_ANALYTIC_TOPIC: link-visited
+
+    depends_on:
+      kafka:
+        condition: service_healthy
+
   postgresql:
     image: postgres:16-alpine
     environment:
@@ -9,12 +46,22 @@ services:
       - 5432:5432
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d short_links"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
 
   redis:
     image: redis:7-alpine
     container_name: redis
     ports:
       - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
 
   kafka:
     image: apache/kafka:4.3.1
