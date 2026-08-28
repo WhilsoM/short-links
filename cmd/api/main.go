@@ -7,9 +7,11 @@ import (
 	"os"
 	"short-links/internal/clients/postgresql"
 	"short-links/internal/config"
+	custommiddlewares "short-links/internal/custom-middlewares"
 	"short-links/internal/users"
 	"short-links/internal/utils"
 
+	"github.com/go-chi/chi/middleware"
 	"github.com/go-chi/chi/v5"
 )
 
@@ -29,8 +31,18 @@ func main() {
 
 	r := chi.NewRouter()
 
+	r.Use(middleware.RequestID)
+	r.Use(middleware.Logger)
+	r.Use(middleware.Recoverer)
+
 	r.Route("/api", func(r chi.Router) {
 		users.Init(r, dbpool, jwtmanager)
+
+		r.Group(func(r chi.Router) {
+			r.Use(custommiddlewares.AuthMiddleware(jwtmanager))
+
+			// todo: add links init
+		})
 	})
 
 	if err := http.ListenAndServe(cfg.Port, r); err != nil {
