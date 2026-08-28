@@ -10,6 +10,7 @@ import (
 
 type linkRepo interface {
 	CreateLink(ctx context.Context, userID int, link, code string) (dto.Link, error)
+	GetLinks(ctx context.Context, userID int) ([]dto.Link, error)
 }
 
 type LinkService struct {
@@ -42,4 +43,13 @@ func (l *LinkService) CreateLink(ctx context.Context, userID int, link string) (
 	}
 
 	return createdLink, nil
+}
+
+func (l *LinkService) GetLinks(ctx context.Context, userID int) ([]dto.Link, error) {
+	links, err := l.repo.GetLinks(ctx, userID)
+	if err != nil {
+		return nil, err
+	}
+
+	return links, nil
 }
