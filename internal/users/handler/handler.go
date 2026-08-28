@@ -69,5 +69,5 @@ func (u *UsersHandler) LoginUser(w http.ResponseWriter, r *http.Request) {
 		AccessToken: tokens,
 	}
 
-	utils.WriteJSONResponse(w, http.StatusCreated, res)
+	utils.WriteJSONResponse(w, http.StatusOK, res)
 }

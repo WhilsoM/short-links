@@ -11,6 +11,7 @@ import (
 type linkRepo interface {
 	CreateLink(ctx context.Context, userID int, link, code string) (dto.Link, error)
 	GetLinks(ctx context.Context, userID int) ([]dto.Link, error)
+	GetLinkByCode(ctx context.Context, code string) (string, error)
 }
 
 type LinkService struct {
@@ -52,4 +53,17 @@ func (l *LinkService) GetLinks(ctx context.Context, userID int) ([]dto.Link, err
 	}
 
 	return links, nil
+}
+
+func (l *LinkService) GetLinkByCode(ctx context.Context, code string) (string, error) {
+	if code == "" {
+		return "", errors.New("code cannot be empty")
+	}
+
+	originalUrl, err := l.repo.GetLinkByCode(ctx, code)
+	if err != nil {
+		return "", err
+	}
+
+	return originalUrl, nil
 }

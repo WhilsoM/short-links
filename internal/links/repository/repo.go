@@ -68,3 +68,15 @@ func (l *LinkRepo) GetLinks(ctx context.Context, userID int) ([]dto.Link, error)
 
 	return result, nil
 }
+
+func (l *LinkRepo) GetLinkByCode(ctx context.Context, code string) (string, error) {
+	query := `SELECT original_link FROM links WHERE code = $1`
+
+	originalUrl := ""
+
+	if err := l.db.QueryRow(ctx, query, code).Scan(&originalUrl); err != nil {
+		return "", err
+	}
+
+	return originalUrl, nil
+}
