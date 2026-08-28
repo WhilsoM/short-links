@@ -3,9 +3,13 @@ package service
 import (
 	"context"
 	"errors"
+	"fmt"
+	"log/slog"
 	"short-links/internal/links/dto"
 	"short-links/internal/utils"
 	"strings"
+
+	"github.com/segmentio/kafka-go"
 )
 
 type linkRepo interface {
@@ -14,13 +18,22 @@ type linkRepo interface {
 	GetLinkByCode(ctx context.Context, code string) (string, error)
 }
 
-type LinkService struct {
-	repo linkRepo
+type linkCache interface {
+	GetLinkByCode(ctx context.Context, code string) (string, error)
+	SetLink(ctx context.Context, code, original_link string) error
 }
 
-func NewLinkService(repo linkRepo) *LinkService {
+type LinkService struct {
+	repo   linkRepo
+	cache  linkCache
+	broker *kafka.Writer
+}
+
+func NewLinkService(repo linkRepo, cache linkCache, broker *kafka.Writer) *LinkService {
 	return &LinkService{
 		repo,
+		cache,
+		broker,
 	}
 }
 
@@ -43,6 +56,10 @@ func (l *LinkService) CreateLink(ctx context.Context, userID int, link string) (
 		return dto.Link{}, err
 	}
 
+	if err := l.cache.SetLink(ctx, createdLink.Code, link); err != nil {
+		slog.Info("failed to set link in cache", "error", err, "code", createdLink.Code)
+	}
+
 	return createdLink, nil
 }
 
@@ -60,10 +77,41 @@ func (l *LinkService) GetLinkByCode(ctx context.Context, code string) (string, e
 		return "", errors.New("code cannot be empty")
 	}
 
+	linkFromCache, err := l.cache.GetLinkByCode(ctx, code)
+	if err != nil {
+		slog.Info("failed to take original link from cache", "error", err, "code", code)
+	}
+
+	if err == nil {
+		err = l.broker.WriteMessages(ctx, kafka.Message{
+			Value: fmt.Appendf([]byte(""), "%s", linkFromCache),
+		})
+		if err != nil {
+			slog.Info("failed to send a message to broker messages", "error", err)
+		}
+		slog.Info("successfuly send a message to broker messages")
+
+		slog.Info("from cache hit!", "link", linkFromCache)
+		return linkFromCache, nil
+	}
+	slog.Info("cache doesn't exist")
+
 	originalUrl, err := l.repo.GetLinkByCode(ctx, code)
 	if err != nil {
 		return "", err
 	}
+
+	if err := l.cache.SetLink(ctx, code, originalUrl); err != nil {
+		slog.Info("failed to set link in cache", "error", err, "code", code)
+	}
+
+	err = l.broker.WriteMessages(ctx, kafka.Message{
+		Value: fmt.Appendf([]byte(""), "%s", linkFromCache),
+	})
+	if err != nil {
+		slog.Info("failed to send a message to broker messages", "error", err)
+	}
+	slog.Info("successfuly send a message to broker messages")
 
 	return originalUrl, nil
 }

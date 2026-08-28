@@ -5,7 +5,9 @@ import (
 	"log/slog"
 	"net/http"
 	"os"
+	"short-links/internal/clients/kafka"
 	"short-links/internal/clients/postgresql"
+	"short-links/internal/clients/redis"
 	"short-links/internal/config"
 	custommiddlewares "short-links/internal/custom-middlewares"
 	"short-links/internal/links"
@@ -30,13 +32,17 @@ func main() {
 	}
 	defer dbpool.Close()
 
+	redisClient := redis.NewRedisClient(cfg.RedisAddr)
+	kafkaClient := kafka.NewKafkaClient(cfg.KafkaAddr, cfg.KafkaAnalyticTopic)
+	defer kafkaClient.Close()
+
 	r := chi.NewRouter()
 
 	r.Use(middleware.RequestID)
 	r.Use(middleware.Logger)
 	r.Use(middleware.Recoverer)
 
-	linkHandler := links.NewBuildHandler(dbpool)
+	linkHandler := links.NewBuildHandler(dbpool, redisClient, kafkaClient)
 
 	links.RegisterPublic(r, linkHandler)
 
