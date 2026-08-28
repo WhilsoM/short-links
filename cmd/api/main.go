@@ -36,13 +36,17 @@ func main() {
 	r.Use(middleware.Logger)
 	r.Use(middleware.Recoverer)
 
+	linkHandler := links.NewBuildHandler(dbpool)
+
+	links.RegisterPublic(r, linkHandler)
+
 	r.Route("/api", func(r chi.Router) {
 		users.Init(r, dbpool, jwtmanager)
 
 		r.Group(func(r chi.Router) {
 			r.Use(custommiddlewares.AuthMiddleware(jwtmanager))
 
-			links.Init(r, dbpool)
+			links.RegisterProtected(r, linkHandler)
 		})
 	})
 

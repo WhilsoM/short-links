@@ -7,18 +7,21 @@ import (
 	custommiddlewares "short-links/internal/custom-middlewares"
 	"short-links/internal/links/dto"
 	"short-links/internal/utils"
+
+	"github.com/go-chi/chi/v5"
 )
 
-type LinkService interface {
+type linkService interface {
 	CreateLink(ctx context.Context, userID int, link string) (dto.Link, error)
 	GetLinks(ctx context.Context, userID int) ([]dto.Link, error)
+	GetLinkByCode(ctx context.Context, code string) (string, error)
 }
 
 type LinkHandler struct {
-	svc LinkService
+	svc linkService
 }
 
-func NewLinkHandler(svc LinkService) *LinkHandler {
+func NewLinkHandler(svc linkService) *LinkHandler {
 	return &LinkHandler{
 		svc,
 	}
@@ -48,7 +51,7 @@ func (l *LinkHandler) CreateLink(w http.ResponseWriter, r *http.Request) {
 
 	res := dto.CreateLinkResponse{
 		ID:        link.ID,
-		ShortLink: "http://localhost:8080/" + link.Code,
+		ShortLink: "http://localhost:8080/r/" + link.Code,
 		CreatedAt: link.CreatedAt,
 	}
 
@@ -70,5 +73,18 @@ func (l *LinkHandler) GetLinks(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	utils.WriteJSONResponse(w, http.StatusCreated, links)
+	utils.WriteJSONResponse(w, http.StatusOK, links)
+}
+
+func (l *LinkHandler) RedirectLink(w http.ResponseWriter, r *http.Request) {
+	code := chi.URLParam(r, "code")
+
+	link, err := l.svc.GetLinkByCode(r.Context(), code)
+	if err != nil {
+		slog.Info("failed to get link by code", "code", code, "error", err)
+		utils.WriteJSONErrorResponse(w, http.StatusInternalServerError, "something went wrong")
+		return
+	}
+
+	http.Redirect(w, r, link, http.StatusFound)
 }

@@ -3,9 +3,9 @@ package dto
 import "time"
 
 type Link struct {
-	ID        int
-	Code      string
-	CreatedAt time.Time
+	ID        int       `json:"id"`
+	Code      string    `json:"code"`
+	CreatedAt time.Time `json:"created_at"`
 }
 
 type CreateLinkRequest struct {

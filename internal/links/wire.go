@@ -9,13 +9,20 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
-func Init(r chi.Router, db *pgxpool.Pool) {
-	repo := repository.NewLinkRepo(db)
-	svc := service.NewLinkService(repo)
-	h := handler.NewLinkHandler(svc)
-
+func RegisterProtected(r chi.Router, h *handler.LinkHandler) {
 	r.Route("/links", func(r chi.Router) {
 		r.Post("/", h.CreateLink)
 		r.Get("/", h.GetLinks)
 	})
+}
+
+func RegisterPublic(r chi.Router, h *handler.LinkHandler) {
+	r.Get("/r/{code}", h.RedirectLink)
+}
+
+func NewBuildHandler(db *pgxpool.Pool) *handler.LinkHandler {
+	repo := repository.NewLinkRepo(db)
+	svc := service.NewLinkService(repo)
+
+	return handler.NewLinkHandler(svc)
 }
