@@ -17,43 +17,93 @@ GET /r/{code} is public.
 
 ## Architecture
 
-migrations/ - goose migrations
-
-cmd/api/main.go - start application
-
-internal/<service_name> - users or links
-
-internal/<service_name>/handler - http handlers
-internal/<service_name>/service - bussiness logic (send event to kafka, validation, take value from redis and check up it)
-internal/<service_name>/repository - work with database (postgresql)
-internal/<service_name>/cache - work with cache (redis)
-internal/<service_name>/events - work with broker message (kafka)
-internal/<service_name>/dto - dtos for requests and responses
+- `migrations/` - goose migrations
+- `cmd/api/main.go` - start application
+- `internal/<service_name>/` - users or links
+- `internal/<service_name>/handler/` - HTTP handlers
+- `internal/<service_name>/service/` - business logic, validation, Kafka events, cache logic
+- `internal/<service_name>/repository/` - work with PostgreSQL
+- `internal/<service_name>/cache/` - work with Redis
+- `internal/<service_name>/events/` - work with Kafka
+- `internal/<service_name>/dto/` - DTOs for requests and responses
+- `Dockerfile` - build application image
+- `docker-compose.yaml` - run backend, PostgreSQL, Redis and Kafka
 
 Dockerfile - build an image
 docker-compose.yaml - up kafka, redis, backend together
 
 ## Database scheme
 
-links table:
-id | original_link | code | user_id | created_at
+### links
 
-id PRIMARY KEY
-code UNIQUE
-user_id FK to users.id
+| Column          | Description               |
+| --------------- | ------------------------- |
+| `id`            | Primary key               |
+| `original_link` | Original URL              |
+| `code`          | Unique short code         |
+| `user_id`       | Foreign key to `users.id` |
+| `created_at`    | Creation timestamp        |
 
-users table:
-id | name | password_hash
+### users
 
-id PRIMARY KEY
+| Column          | Description          |
+| --------------- | -------------------- |
+| `id`            | Primary key          |
+| `name`          | Unique username      |
+| `password_hash` | Hashed user password |
 
 ## Endpoints:
+
+### Users
+
+POST /api/users/register - create a new user
+requst:
+
+```json
+{
+  "username": "...",
+  "password": "..."
+}
+```
+
+201 success
+
+```json
+{
+  "access_token": "..."
+}
+```
+
+bad request 400 invalid username or password
+
+POST /api/users/login
+requst:
+
+```json
+{
+  "username": "...",
+  "password": "..."
+}
+```
+
+response:
+200 success
+
+```json
+{
+  "access_token": "..."
+}
+```
+
+bad request 400 invalid username or password
+
+### Links
 
 - GET /r/{code} - get a short link and redirect immediately without protection
   response:
 
 302 Found
-Location: <original_url>
+Location: `<original_url>`
 
 404 not found:
 
