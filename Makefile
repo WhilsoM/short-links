@@ -3,6 +3,10 @@
 run:
 	go run ./cmd/api
 
+
+consumer:
+	go run ./cmd/analytics
+
 lint:
 	golangci-lint run
 

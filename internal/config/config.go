@@ -8,9 +8,12 @@ import (
 )
 
 type Config struct {
-	Port        string `env:"PORT" env-default:":8080"`
-	DatabaseURL string `env:"DATABASE_URL" env-required:"true"`
-	JWTSecret   string `env:"JWT_SECRET" env-required:"true"`
+	Port               string `env:"PORT" env-default:":8080"`
+	DatabaseURL        string `env:"DATABASE_URL" env-required:"true"`
+	JWTSecret          string `env:"JWT_SECRET" env-required:"true"`
+	RedisAddr          string `env:"REDIS_ADDR" env-required:"true"`
+	KafkaAddr          string `env:"KAFKA_ADDR" env-required:"true"`
+	KafkaAnalyticTopic string `env:"KAFKA_ANALYTIC_TOPIC" env-required:"true"`
 }
 
 func MustConfigLoad() *Config {

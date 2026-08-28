@@ -208,8 +208,7 @@ producer event link-visited:
 
 ```json
 {
-  "id": 42,
-  "code": "x342xc"
+  "original_url": "https://youtube.com/..."
 }
 ```
 
@@ -218,12 +217,9 @@ just log it
 
 ```json
 {
-  "id": 42,
-  "code": "x342xc"
+  "original_url": "https://youtube.com/..."
 }
 ```
-
-"click_count": 55
 
 ## JWT authentication
 
